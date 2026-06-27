@@ -1,0 +1,48 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: automoderate-backend
+    environment:
+      SECRET_KEY: dev-secret
+      JWT_SECRET_KEY: dev-jwt-secret
+      DATABASE_URL: sqlite:////app/data/chat.db
+      LOW_THRESHOLD: "0.40"
+      HIGH_THRESHOLD: "0.75"
+      FLOOD_COUNT: "5"
+      FLOOD_WINDOW: "30"
+      DUPLICATE_WINDOW: "30"
+      TEMP_BLOCK_HOURS: "24"
+      MESSAGE_MAX_LENGTH: "512"
+      ML_MODEL: cointegrated/rubert-tiny-toxicity
+      HF_HOME: /app/data/hf-home
+      SEED_DEFAULT_USERS: "true"
+      DEMO_USERS_PASSWORD: demo12345
+      DEMO_USER_USERNAME: demo_user
+      DEMO_MODERATOR_USERNAME: demo_moderator
+      DEMO_ADMIN_USERNAME: demo_admin
+      SOCKETIO_ASYNC_MODE: threading
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      STOPWORDS: ""
+    volumes:
+      - backend_data:/app/data
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_ORIGIN: http://localhost:5173
+    container_name: automoderate-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+volumes:
+  backend_data:
